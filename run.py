@@ -2,9 +2,14 @@ from flask import Flask, json, request
 
 app = Flask(__name__) #create the Flask app
 
+@app.route('/')
+def browser_test():                
+    """for testing if the app is running with a browser"""
+    return "This app is up and running!"
+
 @app.route('/slash', methods=['POST'])
 def slash_response():                
-    """ endpoint for receiving all slash command requests from Slack """
+    """endpoint for receiving all slash command requests from Slack"""
 
     # create response
     user_id = request.form.get("user_id")
