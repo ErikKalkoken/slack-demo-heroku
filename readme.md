@@ -4,7 +4,7 @@ This is a simple Slack app for showing how to implement the OAuth installation b
 
 This app can respond to slash commands and has a simple webpage for installing it to a workspace. Tokens are stored in a local JSON file.
 
-## Setup
+## How to setup for Heroku
 
 Here is a brief overview how to setup this app with Heroku:
 
@@ -17,7 +17,7 @@ Create a new Slack app on your development workspace. You can give it any name. 
 In order to deploy this app you first need to clone it to your development system:
 
 ```bash
-$ git clone https://github.com/ErikKalkoken/slack-demo-heroku.git
+git clone https://github.com/ErikKalkoken/slack-demo-heroku.git
 ```
 
 ### 3. Deploy to Heroku
@@ -25,9 +25,9 @@ $ git clone https://github.com/ErikKalkoken/slack-demo-heroku.git
 Create a new Heroku app and deploy this app to it. Make sure you are in the cloned git folder.
 
 ```bash
-$ cd slack-demo-heroku
-$ heroku create
-$ git push heroku master
+cd slack-demo-heroku
+heroku create
+git push heroku master
 
 ```
 
@@ -44,27 +44,35 @@ heroku config:set SLACK_CLIENT_SECRET=YYYY
 
 Configure your Slack app as follows:
 
-- Slash commands: create new command (e.g. `/slackdemoheroku`) and link it to `https://your-app.herokuapp.com/slash`
+- Slash commands:
 
-- Ouath & Permission: Add permission: `users:read`
+   create new command (e.g. `/slackdemoheroku`) and link it to `https://your-app.herokuapp.com/slash`
 
-- Ouath & Permission: Add redirect URL set to `https://your-app.herokuapp.com/finish_auth`
+- OAuth & Permission:
 
-- Manage Distribution: Activate
+   Add permission: `users:read`
+
+- OAuth & Permission:
+
+   Add redirect URL set to `https://your-app.herokuapp.com/finish_auth`
+
+- Manage Distribution: 
+
+   Activate
 
 Optionally you can add `https://your-app.herokuapp.com` as your installation landing page to your Slack app.
 
 ### 6. Install your Slack app
 
-The setup is now complete and you can install your Slack app to additional workspaces at this link: 
+The setup is now complete and you can install your Slack app to additional workspaces at this link:
 
-```
+```http
 https://your-app.herokuapp.com
 ```
 
-### 7. Run locally
+## How to run locally
 
-To run the app locally you need to also set client ID and client secret to your environment variables. Many development environments (e.g. Visual Studio Code) will let you do this comfortable as part of your debug configuration.
+To run the app in your local dev environment you need to also set client ID and client secret to your environment variables. Many development environments (e.g. Visual Studio Code) will let you do this comfortable as part of your debug configuration.
 
 In addition you need to run ngrok or another VPN tunnel to expose your local machine to the Internet, so Slack can make requests to it.
 
@@ -77,3 +85,7 @@ This apps implements a slash command and makes a call to the Slack API to get th
 In addition this app implements a simple web page with a link to enable installation to a Slack workspace.
 
 The workspace related token is stored in a local JSON file.
+
+The app uses the standard Python library slackclient to access the Slack API.
+
+The web application is implemented based on Flask and uses Gunicorn on Heroku as web server.
