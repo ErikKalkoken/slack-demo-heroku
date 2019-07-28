@@ -4,6 +4,8 @@ This is a simple Slack app for showing how to implement the OAuth installation b
 
 This app can respond to slash commands and has a simple webpage for installing it to a workspace. Tokens are stored in a local JSON file.
 
+This app is implemented based on the official python example for [Multiple Workspace Install](https://slack.dev/python-slackclient/auth.html) by Slack. Please refer to that documentation for a more detailed explanation how the OAuth process works with Slack.
+
 ## How to setup for Heroku
 
 Here is a brief overview how to setup this app with Heroku:
