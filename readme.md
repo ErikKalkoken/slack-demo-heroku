@@ -52,9 +52,7 @@ Configure your Slack app as follows:
 
    Add permission: `users:read`
 
-- OAuth & Permission:
-
-   Add redirect URL set to `https://your-app.herokuapp.com/finish_auth`
+   Add redirect URL to `https://your-app.herokuapp.com/finish_auth`
 
 - Manage Distribution: 
 
