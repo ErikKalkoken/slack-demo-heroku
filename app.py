@@ -1,10 +1,3 @@
-# This is a simple Slack app for demonstrating how to install
-# a Slack app to multiple workspaces based on Flask and Slackclient
-#
-# This app can respond to slash commands and has a simple webpage 
-# for installing it to a workspace. Tokens are stored in a local JSON file.
-# 
-
 import os
 import slack
 from flask import Flask, json, request
@@ -57,12 +50,9 @@ app = Flask(__name__)
 @app.route("/", methods=["GET"])
 def pre_install():
     """shows the 'Add to Slack' link that will start the the oauth process"""
-    url = ('https://slack.com/oauth/authorize?scope='
-        + oauth_scope
-        + '&client_id='
-        + client_id)        
-    http = '<a href="' + url + '">Add to Slack</a>'
-    return http
+    url = f'https://slack.com/oauth/authorize?scope={ oauth_scope }&client_id={ client_id }'
+    html = f'<a href="{ url }">Add to Slack</a>'
+    return html
 
 
 @app.route("/finish_auth", methods=["GET", "POST"])
@@ -104,7 +94,7 @@ def slash_response():
     team_id = request.form.get("team_id")
     tokens = dict_read_from_json_file(FILENAME_TOKENS)
     if team_id not in tokens:
-        raise RuntimeError("App is not properly installed")
+        return "This app is not properly installed."
     token = tokens[team_id]
     
     # get real name of current user from Slack API
