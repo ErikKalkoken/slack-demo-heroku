@@ -50,7 +50,7 @@ heroku addons:create heroku-postgresql:hobby-dev
 
 Finally we need to create the table for the app. For that we need to execute the script `create_table.py` on the Heroku dyno:
 
-- Go to the web dashboard for your Heroku app. 
+- Go to the web dashboard for your Heroku app.
 
 - Click on "More"
 
@@ -78,7 +78,7 @@ Configure your Slack app as follows:
 
    Add redirect URL to `https://your-app.herokuapp.com/finish_auth`
 
-- Manage Distribution: 
+- Manage Distribution:
 
    Activate
 
@@ -100,7 +100,7 @@ In addition you need to run ngrok or another VPN tunnel to expose your local mac
 
 In order to avoid having to constantly update your Slack app for switching between environments I recommend to have a Slack app for each environment, e.g. one for Heroku and one for your local dev machine.
 
-You will also have to install PostgreSQL to your local machine. Check out [this page](https://devcenter.heroku.com/articles/heroku-postgresql#local-setup) for details on how to install it. 
+You will also have to install PostgreSQL to your local machine. Check out [this page](https://devcenter.heroku.com/articles/heroku-postgresql#local-setup) for details on how to install it.
 
 Also make sure you set the local environment variable DATABASE_URL correctly for your local PostgreSQL installation. Check out [this page](https://stackoverflow.com/questions/3582552/postgresql-connection-url) for details on how that works.
 
