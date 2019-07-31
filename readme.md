@@ -48,6 +48,26 @@ Next we setup the postgres database:
 heroku addons:create heroku-postgresql:hobby-dev
 ```
 
+Finally we need to create the table for the app. For that we need to execute the script `create_table.py` on the Heroku dyno.
+
+For that go to the web dashboard for your Heroku app. 
+
+Click on "More"
+
+Choose "Run console"
+
+Enter the following command to be executed:
+
+```bash
+python create_table.py
+```
+
+When everything worked fine you will get the following response:
+
+```bash
+New table created
+```
+
 ### 5. Configure your Slack app
 
 Configure your Slack app as follows:
@@ -83,6 +103,8 @@ To run the app in your local dev environment you need to also set client ID and 
 In addition you need to run ngrok or another VPN tunnel to expose your local machine to the Internet, so Slack can make requests to it.
 
 In order to avoid having to constantly update your Slack app for switching between environments I recommend to have a Slack app for each environment, e.g. one for Heroku and one for your local dev machine.
+
+You will also have to install PostgreSQL to your local machine. Check out [this page](https://devcenter.heroku.com/articles/heroku-postgresql#local-setup) for details on how to install it. Also make sure you set the local environment variable DATABASE_URL correctly for your local PostgreSQL installation. Check out [this page](https://stackoverflow.com/questions/3582552/postgresql-connection-url) for details on how that works.
 
 ## Technical details
 
