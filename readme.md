@@ -2,7 +2,7 @@
 
 This is a simple Slack app for showing how to implement the OAuth installation based on Flask and Slackclient.
 
-This app can respond to slash commands and has a simple webpage for installing it to a workspace. Tokens are stored in a local JSON file.
+This app can respond to slash commands and has a simple webpage for installing it to a workspace. Tokens are stored in database table using PostgreSQL.
 
 This app is implemented based on the official python example for [Multiple Workspace Install](https://slack.dev/python-slackclient/auth.html) by Slack. Please refer to that documentation for a more detailed explanation how the OAuth process works with Slack.
 
@@ -110,7 +110,7 @@ This apps implements a slash command and makes a call to the Slack API to get th
 
 In addition this app implements a simple web page with a link to enable installation to a Slack workspace.
 
-The workspace related token is stored in a local JSON file.
+The workspace related token is stored in a database table with PostgreSQL. We use the popular psycopg2 as DB driver.
 
 The app uses the standard Python library slackclient to access the Slack API.
 
