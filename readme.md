@@ -42,6 +42,12 @@ heroku config:set SLACK_CLIENT_ID=XXX
 heroku config:set SLACK_CLIENT_SECRET=YYYY
 ```
 
+Next we setup the postgres database:
+
+```bash
+heroku addons:create heroku-postgresql:hobby-dev
+```
+
 ### 5. Configure your Slack app
 
 Configure your Slack app as follows:

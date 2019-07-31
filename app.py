@@ -1,49 +1,113 @@
+# main module with the Slack app
+
 import os
 import slack
 from flask import Flask, json, request
+import psycopg2
 
-# file name for local JSON file to store tokens for workspaces
-FILENAME_TOKENS = "tokens"
+# database connection
+DATABASE_URL = os.environ['DATABASE_URL']
 
 # setting oauth client parameters
 client_id = os.environ["SLACK_CLIENT_ID"]
 client_secret = os.environ["SLACK_CLIENT_SECRET"]
 oauth_scope = "commands,users:read"
 
-# helper functions for reading and writing a dict to a JSON file
+class SlackTeam:
+    """A slack team with its token
+    
+    Public properties:
+        id: team ID
+        name: team name
+        token: Slack token
+    """
+    def __init__(self, id, name, token):
+        self._id = id[:64]
+        self._name = name[:255]
+        self._token = token[:255]
 
-def dict_read_from_json_file(filename):
-    """reads a json file and returns its contents as dict"""     
-    filename += '.json'
-    try:
-        with open(filename, 'r', encoding="utf-8") as f:
-            arr = json.load(f)            
-    except Exception as e:
-        print("WARN: failed to read from {}: ".format(filename), e)
-        arr = dict()
-
-    return arr
+    
+    @property
+    def id(self):
+        return self._id
 
 
-def dict_write_to_json_file(arr, filename):
-    """writes dict to a json file"""     
-    filename += '.json' 
-    print("Writing file: name {}".format(filename))
-    try:
-        with open(filename , 'w', encoding="utf-8") as f:
-            json.dump(
-                arr, 
-                f, 
-                sort_keys=True, 
-                indent=4, 
-                ensure_ascii=False
-                )
-    except Exception as e:
-        print("ERROR: failed to write to {}: ".format(filename), e)   
+    @property
+    def name(self):
+        return self._name
 
+
+    @property
+    def token(self):
+        return self._token
+
+
+    def store(self, connection):
+        """stores the current object to database. will overwrite existing.
+
+        Args:
+            connection: current postgres connection
+
+        Exceptions:
+            on any error
+
+        """
+        try:                
+            cursor = connection.cursor()               
+            sql_query = """INSERT INTO slack_teams (id, name, token) 
+                VALUES (%s, %s, %s) 
+                ON CONFLICT (id)
+                DO UPDATE SET name=%s, token=%s"""
+            record = (self._id, self._name, self._token, self._name, self._token)
+            cursor.execute(sql_query, record)
+            connection.commit()
+        except (Exception, psycopg2.Error) as error:            
+            print("WARN: Failed to insert record into table", error)
+            raise error
+        finally:
+            #closing cursor
+            if (cursor):
+                cursor.close()                
+
+    @staticmethod
+    def fetchFromDb(connection, id):
+        """fetches an object from database by its team ID
+         
+         Args:            
+            connection: current postgres connection
+            id: team ID of object to be fetched
+
+        Returns:
+            the SlackTeam object when found or None if not found
+        
+        Exceptions:
+            on any error
+        """
+        try:            
+            cursor = connection.cursor()
+            sql_query = """SELECT id, name, token 
+                FROM slack_teams 
+                WHERE id = %s"""            
+            cursor.execute(sql_query, (id,))            
+            records = cursor.fetchall()
+            if (len(records) == 0):
+                print(f"WARN: Could not find a team for ID: {id}")
+                obj = None
+            else:
+                record = records[0];
+                obj = SlackTeam(record[0], record[1], record[2])
+            
+        except (Exception, psycopg2.Error) as error :
+            print("Error while fetching data from PostgreSQL", error)
+            raise
+        finally:
+            #closing database connection.
+            if(cursor):
+                cursor.close()
+
+        return obj
 
 # flask app
-
 app = Flask(__name__)
 
 
@@ -59,62 +123,81 @@ def pre_install():
 def post_install():
     """Exchange to oauth code with a token and store it"""
 
-    # Retrieve the auth code from the request params
-    auth_code = request.args['code']
+    try:
+        # Retrieve the auth code from the request params
+        auth_code = request.args['code']
 
-    # An empty string is a valid token for this request
-    client = slack.WebClient(token="")
+        # An empty string is a valid token for this request
+        client = slack.WebClient(token="")
 
-    # Request the auth tokens from Slack
-    api_response = client.oauth_access(
-        client_id=client_id,
-        client_secret=client_secret,
-        code=auth_code
-    )    
-    team_id = api_response["team_id"]
-    access_token = api_response["access_token"]
-    team_name = api_response["team_name"]
-
-    # store the received token to our local store for later use
-    # we are using a JSON file to keep this example simple
-    # but this should be a database for any production app
-    tokens = dict_read_from_json_file(FILENAME_TOKENS)
-    tokens[team_id] = access_token
-    dict_write_to_json_file(tokens, FILENAME_TOKENS)
-
-    http = 'Installation completed to workspace ' + team_name
+        # Request the auth tokens from Slack
+        api_response = client.oauth_access(
+            client_id=client_id,
+            client_secret=client_secret,
+            code=auth_code
+        )    
+        team_id = api_response["team_id"]
+        team_name = api_response["team_name"]
+        access_token = api_response["access_token"]
+        
+        # store the received token to our DB for later use        
+    
+        connection = psycopg2.connect(DATABASE_URL)
+        team = SlackTeam(
+            team_id,
+            team_name,
+            access_token
+        )
+        team.store(connection)
+        connection.close()
+        http = 'Installation completed for workspace ' + team_name
+    except (Exception, psycopg2.Error) as error :
+        print("ERROR: ", error)
+        http = 'Installation failed for workspace ' + team_name
+    
     return http
 
 
 @app.route('/slash', methods=['POST'])
 def slash_response():                
     """endpoint for receiving all slash command requests from Slack"""
+    
+    try:        
+        # get token for current workspace
+        team_id = request.form.get("team_id")
+        connection = psycopg2.connect(DATABASE_URL)
+        team = SlackTeam.fetchFromDb(
+            connection, 
+            team_id
+        )    
+        connection.close()
+        if team is None:
+            raise RuntimeError(
+                "This app is not properly installed for team " + team_id
+                )
+                
+        # get real name of current user from Slack API
+        user_id = request.form.get("user_id")
+        print(team.token)
+        client = slack.WebClient(token=team.token)
+        api_response = client.users_info(user=user_id)
+        assert(api_response["ok"])
+        user_info = api_response["user"]
+        if "real_name" in user_info:
+            user_name = user_info["real_name"]
+        else:
+            user_name = user_info["name"]
+        
+        # create response
+        
+        response = json.jsonify({
+            "text": "Hi " + user_name + "! How is it going?"
+        })   
+    except Exception as error:
+        print("ERROR: ", error)
+        response = "An internal error occurred"
 
-    # get token for current workspace
-    team_id = request.form.get("team_id")
-    tokens = dict_read_from_json_file(FILENAME_TOKENS)
-    if team_id not in tokens:
-        return "This app is not properly installed."
-    token = tokens[team_id]
-    
-    # get real name of current user from Slack API
-    user_id = request.form.get("user_id")
-    client = slack.WebClient(token=token)
-    api_response = client.users_info(user=user_id)
-    assert(api_response["ok"])
-    user_info = api_response["user"]
-    if "real_name" in user_info:
-        user_name = user_info["real_name"]
-    else:
-        user_name = user_info["name"]
-    
-    # create response
-    
-    response = json.jsonify({
-        "text": "Hi " + user_name + "! How is it going?"
-    })
-
-    ## convert response message into JSON and send back to Slack
+    ## respond to user
     return response
 
 
