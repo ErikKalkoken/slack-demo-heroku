@@ -89,12 +89,11 @@ class SlackTeam:
                 FROM slack_teams 
                 WHERE id = %s"""            
             cursor.execute(sql_query, (id,))            
-            records = cursor.fetchall()
-            if (len(records) == 0):
+            record = cursor.fetchone()
+            if (record == None):
                 print(f"WARN: Could not find a team for ID: {id}")
                 obj = None
-            else:
-                record = records[0];
+            else:                
                 obj = SlackTeam(record[0], record[1], record[2])
             
         except (Exception, psycopg2.Error) as error :
