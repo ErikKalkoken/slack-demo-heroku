@@ -11,7 +11,7 @@ try:
     connection = psycopg2.connect(DATABASE_URL)
     cursor = connection.cursor()
     sql = """
-        DROP TABLE public.slack_teams;
+        DROP TABLE IF EXISTS public.slack_teams;
         CREATE TABLE public.slack_teams
         (
             id character varying(64) COLLATE pg_catalog."default" NOT NULL,                
